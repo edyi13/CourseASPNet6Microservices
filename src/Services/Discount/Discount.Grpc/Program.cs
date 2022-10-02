@@ -1,6 +1,9 @@
 using Discount.Grpc.Extensions;
 using Discount.Grpc.Repositories;
 using Discount.Grpc.Services;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System.Net;
+using System.Reflection.PortableExecutable;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,22 @@ builder.Services.AddGrpc();
 // Add services to the container.
 builder.Services.AddScoped<IDiscountRepository, DiscountRepository>();
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
+builder.WebHost.ConfigureKestrel(options =>
+{   // Setup a HTTP/2 endpoint without TLS.
+    options.Listen(IPAddress.Any, 8003, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+    options.Listen(IPAddress.Any, 80, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+    options.Listen(IPAddress.Any, 5284, listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+});
 
 //Creation of the table for the container
 var host = WebApplication.CreateBuilder(args).Build();
